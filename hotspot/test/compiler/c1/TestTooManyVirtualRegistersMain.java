@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,33 +23,21 @@
 
 /*
  * @test
- * @bug 4482446
- * @summary java.net.SocketTimeoutException on 98, NT, 2000 for JSSE
- * @library /javax/net/ssl/templates
- * @run main ReuseAddr
- *
- *     SunJSSE does not support dynamic system properties, no way to re-use
- *     system properties in samevm/agentvm mode.
- * @author Brad Wetmore
+ * @bug 8261235
+ * @summary Tests custom bytecode which requires too many virtual registers in the linear scan of C1.
+ *          The test should bail out in C1.
+ * @compile TestTooManyVirtualRegisters.jasm
+ * @run main/othervm -Xbatch -XX:CompileCommand=dontinline,compiler.c1.TestExceptionBlockWithPredecessors::*
+ *                   compiler.c1.TestTooManyVirtualRegistersMain
  */
 
-import java.net.ServerSocket;
+package compiler.c1;
 
-public class ReuseAddr extends SSLSocketTemplate {
-
-    @Override
-    protected void doServerSide() throws Exception {
-        super.doServerSide();
-
-        // Note that if this port is already used by another test,
-        // this test will fail.
-        System.out.println("Try rebinding to same port: " + serverPort);
-        try (ServerSocket server = new ServerSocket(serverPort)) {
-            System.out.println("Server port: " + server.getLocalPort());
+public class TestTooManyVirtualRegistersMain {
+    public static void main(String[] args) {
+        for (char i = 0; i < 10000; i++) {
+            TestTooManyVirtualRegisters.test(i);
         }
     }
-
-    public static void main(String[] args) throws Exception {
-        new ReuseAddr().run();
-    }
 }
+
